@@ -1,3 +1,5 @@
+package  com.sz;
+
 /**
  * @Author 邱道长
  * @Date 2018/5/23
