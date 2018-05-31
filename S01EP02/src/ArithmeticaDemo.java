@@ -1,3 +1,4 @@
+// 导包行为【语法】： import 包名.类名  包名一般有多个级别组成彼此使用“.”作为分隔符号。
 import java.util.Scanner;
 
 /**

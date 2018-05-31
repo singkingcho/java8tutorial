@@ -13,7 +13,7 @@ public class ArithmeticaDemo2 {
         //
         int a = 1000000000;
         int b = 2000000000;
-        //  经过了四则运算之后，有可能超越了范围
+        //  经过了四则运算之后，有可能超越了范围，需要对于越界的运算谨慎
         int c = a + b;
         System.out.println(c);
 

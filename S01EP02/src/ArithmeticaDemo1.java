@@ -8,7 +8,8 @@ public class ArithmeticaDemo1 {
 
     public static void main(String[] args) {
 
-      // 异或的使用
+        // 异或的使用
+        // 同则假，异则真
         boolean b1 = true;
         boolean b2 = true;
         boolean b3 = b1 ^ b2;
