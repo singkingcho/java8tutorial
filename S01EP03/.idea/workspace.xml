@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4a0cd248-dcb5-4158-a841-b18e36fad99c" name="Default" comment="litter change">
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Execise9.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Execise9.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -26,8 +27,8 @@
       <file leaf-file-name="Execise9.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/Execise9.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="378">
-              <caret line="14" column="19" selection-start-line="14" selection-start-column="19" selection-end-line="14" selection-end-column="19" />
+            <state relative-caret-position="135">
+              <caret line="5" column="3" selection-start-line="5" selection-start-column="3" selection-end-line="5" selection-end-column="3" />
             </state>
           </provider>
         </entry>
@@ -280,7 +281,7 @@
       <workItem from="1527745336949" duration="5703000" />
       <workItem from="1527752833838" duration="2467000" />
       <workItem from="1527812736681" duration="399000" />
-      <workItem from="1528082784915" duration="332000" />
+      <workItem from="1528082784915" duration="583000" />
     </task>
     <task id="LOCAL-00001" summary="java基础第三章">
       <created>1527812838028</created>
@@ -289,14 +290,22 @@
       <option name="project" value="LOCAL" />
       <updated>1527812838028</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="litter change">
+      <created>1528083341227</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1528083341227</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="8901000" />
+    <option name="totallyTimeSpent" value="9152000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info anchor="right" id="Palette" order="3" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -366,7 +375,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="java基础第三章" />
-    <option name="LAST_COMMIT_MESSAGE" value="java基础第三章" />
+    <MESSAGE value="litter change" />
+    <option name="LAST_COMMIT_MESSAGE" value="litter change" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -549,8 +559,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/Execise9.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="378">
-          <caret line="14" column="19" selection-start-line="14" selection-start-column="19" selection-end-line="14" selection-end-column="19" />
+        <state relative-caret-position="135">
+          <caret line="5" column="3" selection-start-line="5" selection-start-column="3" selection-end-line="5" selection-end-column="3" />
         </state>
       </provider>
     </entry>
