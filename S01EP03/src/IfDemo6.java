@@ -8,6 +8,7 @@ import java.util.Scanner;
 public class IfDemo6 {
 
 
+    // d6
     public static void main(String[] args) {
 
         // if判断里面使用 或
