@@ -23,6 +23,7 @@ public class E5 {
             sum += mid;
         }
         System.out.println("平均值：" + sum / 20.0);
+        // modify test
     }
 
 
