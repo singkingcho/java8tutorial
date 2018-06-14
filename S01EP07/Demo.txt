@@ -1,0 +1,270 @@
+
+@Experimental
+@BackpressureSupport(BackpressureKind.FULL)
+@SchedulerSupport(SchedulerSupport.NONE)
+public final class MulticastProcessor<T> extends FlowableProcessor<T> {
+
+    
+    @SuppressWarnings("unchecked")
+    MulticastProcessor(int bufferSize, boolean refCount) {
+        ObjectHelper.verifyPositive(bufferSize, "bufferSize");
+        this.bufferSize = bufferSize;
+        this.limit = bufferSize - (bufferSize >> 2);
+        this.wip = new AtomicInteger();
+        this.subscribers = new AtomicReference<MulticastSubscription<T>[]>(EMPTY);
+        this.upstream = new AtomicReference<Subscription>();
+        this.refcount = refCount;
+        this.once = new AtomicBoolean();
+    }
+ 
+    public void start() {
+        if (SubscriptionHelper.setOnce(upstream, EmptySubscription.INSTANCE)) {
+            queue = new SpscArrayQueue<T>(bufferSize);
+        }
+    }
+ 
+    public void startUnbounded() {
+        if (SubscriptionHelper.setOnce(upstream, EmptySubscription.INSTANCE)) {
+            queue = new SpscLinkedArrayQueue<T>(bufferSize);
+        }
+    }
+
+    @Override
+    public void onSubscribe(Subscription s) {
+        if (SubscriptionHelper.setOnce(upstream, s)) {
+            if (s instanceof QueueSubscription) {
+                @SuppressWarnings("unchecked")
+                QueueSubscription<T> qs = (QueueSubscription<T>)s;
+
+                int m = qs.requestFusion(QueueSubscription.ANY);
+                if (m == QueueSubscription.SYNC) {
+                    fusionMode = m;
+                    queue = qs;
+                    done = true;
+                    drain();
+                    return;
+                }
+                if (m == QueueSubscription.ASYNC) {
+                    fusionMode = m;
+                    queue = qs;
+
+                    s.request(bufferSize);
+                    return;
+                }
+            }
+
+            queue = new SpscArrayQueue<T>(bufferSize);
+
+            s.request(bufferSize);
+        }
+    }
+
+    @Override
+    public void onNext(T t) {
+        if (once.get()) {
+            return;
+        }
+        if (fusionMode == QueueSubscription.NONE) {
+            ObjectHelper.requireNonNull(t, "onNext called with null. Null values are generally not allowed in 2.x operators and sources.");
+            if (!queue.offer(t)) {
+                SubscriptionHelper.cancel(upstream);
+                onError(new MissingBackpressureException());
+                return;
+            }
+        }
+        drain();
+    }
+
+ 
+    public boolean offer(T t) {
+        if (once.get()) {
+            return false;
+        }
+        ObjectHelper.requireNonNull(t, "offer called with null. Null values are generally not allowed in 2.x operators and sources.");
+        if (fusionMode == QueueSubscription.NONE) {
+            if (queue.offer(t)) {
+                drain();
+                return true;
+            }
+        }
+        return false;
+    }
+
+ 
+    
+
+    @SuppressWarnings("unchecked")
+    void remove(MulticastSubscription<T> inner) {
+        for (;;) {
+            MulticastSubscription<T>[] a = subscribers.get();
+            int n = a.length;
+            if (n == 0) {
+                return;
+            }
+
+            int j = -1;
+            for (int i = 0; i < n; i++) {
+                if (a[i] == inner) {
+                    j = i;
+                    break;
+                }
+            }
+
+            if (j < 0) {
+                break;
+            }
+
+            if (n == 1) {
+                if (refcount) {
+                    if (subscribers.compareAndSet(a, TERMINATED)) {
+                        SubscriptionHelper.cancel(upstream);
+                        once.set(true);
+                        break;
+                    }
+                } else {
+                    if (subscribers.compareAndSet(a, EMPTY)) {
+                        break;
+                    }
+                }
+            } else {
+                MulticastSubscription<T>[] b = new MulticastSubscription[n - 1];
+                System.arraycopy(a, 0, b, 0, j);
+                System.arraycopy(a, j + 1, b, j, n - j - 1);
+                if (subscribers.compareAndSet(a, b)) {
+                    break;
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    void drain() {
+        if (wip.getAndIncrement() != 0) {
+            return;
+        }
+
+        int missed = 1;
+        AtomicReference<MulticastSubscription<T>[]> subs = subscribers;
+        int c = consumed;
+        int lim = limit;
+        int fm = fusionMode;
+
+        outer:
+        for (;;) {
+
+            SimpleQueue<T> q = queue;
+
+            if (q != null) {
+                MulticastSubscription<T>[] as = subs.get();
+                int n = as.length;
+
+                if (n != 0) {
+                    long r = -1L;
+
+                    for (MulticastSubscription<T> a : as) {
+                        long ra = a.get();
+                        if (ra >= 0L) {
+                            if (r == -1L) {
+                                r = ra - a.emitted;
+                            } else {
+                                r = Math.min(r, ra - a.emitted);
+                            }
+                        }
+                    }
+
+                    while (r > 0L) {
+                        MulticastSubscription<T>[] bs = subs.get();
+
+                        if (bs == TERMINATED) {
+                            q.clear();
+                            return;
+                        }
+
+                        if (as != bs) {
+                            continue outer;
+                        }
+
+                        boolean d = done;
+
+                        T v;
+
+                        try {
+                            v = q.poll();
+                        } catch (Throwable ex) {
+                            Exceptions.throwIfFatal(ex);
+                            SubscriptionHelper.cancel(upstream);
+                            d = true;
+                            v = null;
+                            error = ex;
+                            done = true;
+                        }
+                        boolean empty = v == null;
+
+                        if (d && empty) {
+                            Throwable ex = error;
+                            if (ex != null) {
+                                for (MulticastSubscription<T> inner : subs.getAndSet(TERMINATED)) {
+                                    inner.onError(ex);
+                                }
+                            } else {
+                                for (MulticastSubscription<T> inner : subs.getAndSet(TERMINATED)) {
+                                    inner.onComplete();
+                                }
+                            }
+                            return;
+                        }
+
+                        if (empty) {
+                            break;
+                        }
+
+                        for (MulticastSubscription<T> inner : as) {
+                            inner.onNext(v);
+                        }
+
+                        r--;
+
+                        if (fm != QueueSubscription.SYNC) {
+                            if (++c == lim) {
+                                c = 0;
+                                upstream.get().request(lim);
+                            }
+                        }
+                    }
+
+                    if (r == 0) {
+                        MulticastSubscription<T>[] bs = subs.get();
+
+                        if (bs == TERMINATED) {
+                            q.clear();
+                            return;
+                        }
+
+                        if (as != bs) {
+                            continue outer;
+                        }
+
+                        if (done && q.isEmpty()) {
+                            Throwable ex = error;
+                            if (ex != null) {
+                                for (MulticastSubscription<T> inner : subs.getAndSet(TERMINATED)) {
+                                    inner.onError(ex);
+                                }
+                            } else {
+                                for (MulticastSubscription<T> inner : subs.getAndSet(TERMINATED)) {
+                                    inner.onComplete();
+                                }
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+
+            missed = wip.addAndGet(-missed);
+            if (missed == 0) {
+                break;
+            }
+        }
+    }
+}
