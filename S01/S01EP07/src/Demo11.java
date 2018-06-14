@@ -46,6 +46,7 @@ public class Demo11 {
         }
 
 
+        // dddd
         for (int[] ns:nums){
             for (int s:ns){
                 System.out.print(s + "\t");
